@@ -1,5 +1,6 @@
 module Main (main) where
 
+import Bench
 import Cli
 import Control.Concurrent (threadDelay)
 import Game
@@ -23,9 +24,6 @@ initState =
     , (-1, -2)
     ]
 
--- fps :: Double
--- fps = 0.5
-
 display :: Double -> World -> IO ()
 display fps world = do
   clearScreen
@@ -34,10 +32,9 @@ display fps world = do
   threadDelay (1000 * floor (1000 / fps))
 
 main :: IO ()
--- main = setTitle "Life-TUI" >> mapM_ display (iterate updateWorld initState)
 main = do
   setTitle "Life-TUI"
-  args <- parse
-  case cmd args of
+  Args{cmd} <- parse
+  case cmd of
     Run{fps} -> mapM_ (display fps) (iterate updateWorld initState)
-    Bench -> putStrLn "Not implemented"
+    Bench{generations} -> runBench generations initState
