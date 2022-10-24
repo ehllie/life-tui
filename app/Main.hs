@@ -1,5 +1,6 @@
 module Main (main) where
 
+import Cli
 import Control.Concurrent (threadDelay)
 import Game
 import System.Console.ANSI (clearScreen, setCursorPosition, setTitle)
@@ -22,15 +23,21 @@ initState =
     , (-1, -2)
     ]
 
-fps :: Double
-fps = 0.5
+-- fps :: Double
+-- fps = 0.5
 
-display :: World -> IO ()
-display world = do
+display :: Double -> World -> IO ()
+display fps world = do
   clearScreen
   setCursorPosition 0 0
   putStrLn $ showTab $ toTable' world
   threadDelay (1000 * floor (1000 / fps))
 
 main :: IO ()
-main = setTitle "Life-TUI" >> mapM_ display (iterate updateWorld initState)
+-- main = setTitle "Life-TUI" >> mapM_ display (iterate updateWorld initState)
+main = do
+  setTitle "Life-TUI"
+  args <- parse
+  case cmd args of
+    Run{fps} -> mapM_ (display fps) (iterate updateWorld initState)
+    Bench -> putStrLn "Not implemented"

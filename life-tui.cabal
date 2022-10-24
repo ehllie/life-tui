@@ -63,10 +63,13 @@ executable e-gol
   main-is:            Main.hs
 
   -- Modules included in this executable, other than Main.
-  other-modules:      Game
+  other-modules:
+    Cli
+    Game
 
   -- LANGUAGE extensions used by modules in this package.
   default-extensions:
+    ApplicativeDo
     LambdaCase
     NamedFieldPuns
     QuasiQuotes
@@ -75,8 +78,10 @@ executable e-gol
   -- Other library packages from which modules are imported.
   build-depends:
     , ansi-terminal
-    , base                ^>=4.15.1.0
+    , base                  ^>=4.15.1.0
     , containers
+    , criterion
+    , optparse-applicative
     , string-interpolate
 
   -- Directories containing source files.
