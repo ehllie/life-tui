@@ -7,7 +7,7 @@
   outputs = { self, nixpkgs, flake-utils }:
     {
       overlays.default = _: prev: {
-        e-gol = with prev.haskellPackages;
+        life-tui = with prev.haskellPackages;
           developPackage { root = ./.; };
       };
 
@@ -18,13 +18,13 @@
           inherit system;
           overlays = [ self.overlays.default ];
         };
-        inherit (pkgs) e-gol;
+        inherit (pkgs) life-tui;
       in
       {
         packages = {
-          inherit e-gol;
-          default = e-gol;
+          inherit life-tui;
+          default = life-tui;
         };
-        devShells.default = e-gol.env;
+        devShells.default = life-tui.env;
       }));
 }
