@@ -55,7 +55,7 @@ extra-doc-files: CHANGELOG.md
 common warnings
   ghc-options: -Wall
 
-executable e-gol
+executable life-tui
   -- Import common warning flags.
   import:             warnings
 

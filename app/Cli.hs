@@ -1,15 +1,12 @@
 module Cli (parse, Args (..), Command (..)) where
 
+import Criterion.Main.Options (Mode, defaultConfig, parseWith)
 import Options.Applicative
 
-data Args = Args
-  { cmd :: Command
-  , pattern :: String
-  }
-
+data Args = Args {cmd :: Command}
 data Command
-  = Run {fps :: Double}
-  | Bench {generations :: Int}
+  = Run {fps :: Double, pattern :: String}
+  | Bench Mode
 
 parseCmd :: Parser Command
 parseCmd =
@@ -20,16 +17,12 @@ parseCmd =
  where
   runCmd = do
     fps <- option auto (long "fps" <> short 'f' <> value 1 <> help "Frames per second")
-    pure Run{fps}
-  runBench = do
-    generations <- option auto (long "generations" <> short 'g' <> value 100 <> help "Generations to run")
-    pure Bench{generations}
+    pattern <- argument str (metavar "PATTERN")
+    pure Run{fps, pattern}
+  runBench = Bench <$> parseWith defaultConfig
 
 parseArgs :: Parser Args
-parseArgs = do
-  cmd <- parseCmd
-  pattern <- argument str (metavar "PATTERN")
-  pure Args{cmd, pattern}
+parseArgs = Args <$> parseCmd
 
 parse :: IO Args
 parse = execParser opts

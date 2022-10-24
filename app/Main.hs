@@ -37,4 +37,4 @@ main = do
   Args{cmd} <- parse
   case cmd of
     Run{fps} -> mapM_ (display fps) (iterate updateWorld initState)
-    Bench{generations} -> runBench generations initState
+    (Bench mode) -> runBench initState mode
