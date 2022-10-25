@@ -3,7 +3,7 @@ module Cli (parse, Args (..), Command (..)) where
 import Criterion.Main.Options (Mode, defaultConfig, parseWith)
 import Options.Applicative
 
-data Args = Args {cmd :: Command}
+newtype Args = Args {cmd :: Command}
 data Command
   = Run {fps :: Double, pattern :: String}
   | Bench Mode

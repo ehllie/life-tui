@@ -1,5 +1,6 @@
 module Game (
   Cell,
+  Dims,
   Point,
   World,
   lookupWorld,
@@ -8,6 +9,7 @@ module Game (
   toTable',
   toTable,
   updateWorld,
+  worldDims,
 ) where
 
 import qualified Data.Map.Strict as Map
@@ -20,7 +22,9 @@ instance Show Cell where
   show Alive = "X"
   show Dead = " "
 
-type Point = (Int, Int)
+type Point = (Integer, Integer)
+
+type Dims = (Integer, Integer)
 
 type World = (Map.Map Point Cell)
 
@@ -65,12 +69,12 @@ nextGen w p =
 newWorld :: [Point] -> World
 newWorld = Map.fromList . map (,Alive)
 
-toTable :: Point -> Point -> World -> [[Cell]]
-toTable (tlX, tlY) (brX, brY) m =
+toTable :: Point -> Dims -> World -> [[Cell]]
+toTable (aX, aY) (w, h) m =
   [ [ lookupWorld m (x, y)
-    | x <- [tlX .. brX]
+    | x <- [aX .. aX + w - 1]
     ]
-  | y <- [tlY, tlY - 1 .. brY]
+  | y <- [aY, aY - 1 .. aY - h - 1]
   ]
 
 readTemplate :: String -> World
@@ -87,9 +91,19 @@ readTemplate s =
           "." -> (ps, next)
           _ -> error "Invalid character"
 
+worldDims :: World -> (Point, Dims)
+worldDims w =
+  let (xMin, xMax, yMin, yMax) =
+        Map.foldlWithKey
+          (\(xMin, xMax, yMin, yMax) (x, y) _ -> (min xMin x, max xMax x, min yMin y, max yMax y))
+          (0, 0, 0, 0)
+          w
+   in ( (ceiling $ fromIntegral (xMax + xMin) / 2, ceiling $ fromIntegral (yMax + yMin) / 2)
+      , (xMax - xMin + 1, yMax - yMin + 1)
+      )
+
 toTable' :: World -> [[Cell]]
-toTable' m = toTable tlP brP m
+toTable' m = toTable (cX - w + r, cY - h + b) (w, h) m
  where
-  nonDead = map fst $ Map.toList $ Map.filter (/= Dead) m
-  corners ((tlX, tlY), (brX, brY)) (x, y) = ((min tlX x, max tlY y), (max brX x, min brY y))
-  (tlP, brP) = foldl corners (head nonDead, head nonDead) nonDead
+  ((cX, cY), (w, h)) = worldDims m
+  (r, b) = (w `div` 2, h `div` 2)
