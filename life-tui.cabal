@@ -62,6 +62,19 @@ common compile-opts
     QuasiQuotes
     TupleSections
 
+library compile-const
+  import:          compile-opts
+  exposed-modules: Const
+  visibility:      private
+  hs-source-dirs:  compile
+  build-depends:
+    , base              ^>=4.15.1.0
+    , directory
+    , filepath
+    , template-haskell
+
+  other-modules:   ConstQ
+
 library
   import:          compile-opts
   exposed-modules: Game
@@ -76,7 +89,8 @@ benchmark life-bench
   type:           exitcode-stdio-1.0
   hs-source-dirs: bench
   build-depends:
-    , base       ^>=4.15.1.0
+    , base           ^>=4.15.1.0
+    , compile-const
     , criterion
     , life-tui
 
@@ -91,6 +105,7 @@ executable life-tui
   build-depends:
     , ansi-terminal
     , base                  ^>=4.15.1.0
+    , compile-const
     , life-tui
     , optparse-applicative
     , string-interpolate

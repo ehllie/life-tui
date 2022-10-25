@@ -1,5 +1,6 @@
 module Main (main) where
 
+import Const
 import Criterion.Main
 import Game
 
@@ -11,7 +12,7 @@ simulationLengths = [100, 1000, 10000, 50000]
 
 main :: IO ()
 main = do
-  worlds <- mapM (readFile . (++) "/home/ellie/Code/life-tui/templates/" . (++ ".gol")) templates
+  worlds <- mapM (readFile . templatePath) templates
   defaultMain
     [ bgroup
       template

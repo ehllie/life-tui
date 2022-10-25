@@ -1,8 +1,8 @@
 module Main (main) where
 
 import Cli
+import Const
 import Control.Concurrent (threadDelay)
-import Data.String.Interpolate (i)
 import Game
 import System.Console.ANSI (getTerminalSize, setCursorPosition, setTitle)
 
@@ -43,6 +43,6 @@ main :: IO ()
 main = do
   setTitle "Life-TUI"
   Args{fps, pattern, static} <- parse
-  startWorld <- readTemplate <$> readFile [i|/home/ellie/Code/life-tui/templates/#{pattern}.gol|]
+  startWorld <- readTemplate <$> readFile (templatePath pattern)
   let draw = if static then staticTable $ findCentre startWorld else wholeTable
   mapM_ (display fps draw) (iterate updateWorld startWorld)
