@@ -52,23 +52,9 @@ extra-doc-files: CHANGELOG.md
 -- Extra source files to be distributed with the package, such as examples, or a tutorial module.
 -- extra-source-files:
 
-common warnings
-  ghc-options: -Wall -Wno-type-defaults
-
-executable life-tui
-  -- Import common warning flags.
-  import:             warnings
-
-  -- .hs or .lhs file containing the Main module.
-  main-is:            Main.hs
-
-  -- Modules included in this executable, other than Main.
-  other-modules:
-    Bench
-    Cli
-    Game
-
-  -- LANGUAGE extensions used by modules in this package.
+common compile-opts
+  ghc-options:        -Wall -Wno-type-defaults
+  default-language:   Haskell2010
   default-extensions:
     ApplicativeDo
     LambdaCase
@@ -76,18 +62,38 @@ executable life-tui
     QuasiQuotes
     TupleSections
 
+library
+  import:          compile-opts
+  exposed-modules: Game
+  hs-source-dirs:  lib
+  build-depends:
+    , base        ^>=4.15.1.0
+    , containers
+
+benchmark life-bench
+  import:         compile-opts
+  main-is:        Bench.hs
+  type:           exitcode-stdio-1.0
+  hs-source-dirs: bench
+  build-depends:
+    , base       ^>=4.15.1.0
+    , criterion
+    , life-tui
+
+executable life-tui
+  import:         compile-opts
+  main-is:        Main.hs
+  other-modules:  Cli
+
+  -- LANGUAGE extensions used by modules in this package.
+
   -- Other library packages from which modules are imported.
   build-depends:
     , ansi-terminal
     , base                  ^>=4.15.1.0
-    , containers
-    , criterion
-    , mtl
+    , life-tui
     , optparse-applicative
     , string-interpolate
 
   -- Directories containing source files.
-  hs-source-dirs:     app
-
-  -- Base language which the package is written in.
-  default-language:   Haskell2010
+  hs-source-dirs: app

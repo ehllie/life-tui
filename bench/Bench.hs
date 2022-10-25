@@ -1,7 +1,6 @@
-module Bench (runBench) where
+module Main (main) where
 
 import Criterion.Main
-import Criterion.Main.Options (Mode)
 import Game
 
 templates :: [String]
@@ -10,11 +9,10 @@ templates = ["acorn", "beacon", "glider", "gun", "infinite", "r-pentomino"]
 simulationLengths :: [Int]
 simulationLengths = [100, 1000, 10000, 50000]
 
-runBench :: Mode -> IO ()
-runBench mode = do
+main :: IO ()
+main = do
   worlds <- mapM (readFile . (++) "/home/ellie/Code/life-tui/templates/" . (++ ".gol")) templates
-  runMode
-    mode
+  defaultMain
     [ bgroup
       template
       [ bench

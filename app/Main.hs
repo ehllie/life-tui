@@ -1,6 +1,5 @@
 module Main (main) where
 
-import Bench
 import Cli
 import Control.Concurrent (threadDelay)
 import Data.String.Interpolate (i)
@@ -43,10 +42,7 @@ display fps draw world = do
 main :: IO ()
 main = do
   setTitle "Life-TUI"
-  Args{cmd} <- parse
-  case cmd of
-    Run{fps, pattern, static} -> do
-      startWorld <- readTemplate <$> readFile [i|/home/ellie/Code/life-tui/templates/#{pattern}.gol|]
-      let draw = if static then staticTable $ findCentre startWorld else wholeTable
-      mapM_ (display fps draw) (iterate updateWorld startWorld)
-    (Bench mode) -> runBench mode
+  Args{fps, pattern, static} <- parse
+  startWorld <- readTemplate <$> readFile [i|/home/ellie/Code/life-tui/templates/#{pattern}.gol|]
+  let draw = if static then staticTable $ findCentre startWorld else wholeTable
+  mapM_ (display fps draw) (iterate updateWorld startWorld)

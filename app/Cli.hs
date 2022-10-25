@@ -1,29 +1,15 @@
-module Cli (parse, Args (..), Command (..)) where
+module Cli (parse, Args (..)) where
 
-import Criterion.Main.Options (Mode, defaultConfig, parseWith)
 import Options.Applicative
 
-newtype Args = Args {cmd :: Command}
-data Command
-  = Run {fps :: Double, pattern :: String, static :: Bool}
-  | Bench Mode
-
-parseCmd :: Parser Command
-parseCmd =
-  hsubparser
-    ( command "run" (info runCmd (progDesc "Run the game"))
-        <> command "bench" (info runBench (progDesc "Run benchmarks"))
-    )
- where
-  runCmd = do
-    fps <- option auto (long "fps" <> short 'f' <> value 1 <> help "Frames per second")
-    pattern <- argument str (metavar "PATTERN")
-    static <- switch (long "static" <> short 's' <> help "Static view")
-    pure Run{fps, pattern, static}
-  runBench = Bench <$> parseWith defaultConfig
+data Args = Args {fps :: Double, pattern :: String, static :: Bool}
 
 parseArgs :: Parser Args
-parseArgs = Args <$> parseCmd
+parseArgs = do
+  fps <- option auto (long "fps" <> short 'f' <> value 1 <> help "Frames per second")
+  pattern <- argument str (metavar "PATTERN")
+  static <- switch (long "static" <> short 's' <> help "Static view")
+  pure Args{fps, pattern, static}
 
 parse :: IO Args
 parse = execParser opts
