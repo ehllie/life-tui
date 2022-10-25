@@ -1,4 +1,14 @@
-module Game (Point, Cell, World, updateWorld, lookupWorld, newWorld, toTable, toTable') where
+module Game (
+  Cell,
+  Point,
+  World,
+  lookupWorld,
+  newWorld,
+  readTemplate,
+  toTable',
+  toTable,
+  updateWorld,
+) where
 
 import qualified Data.Map.Strict as Map
 import qualified Data.Maybe as Maybe
@@ -56,16 +66,30 @@ newWorld :: [Point] -> World
 newWorld = Map.fromList . map (,Alive)
 
 toTable :: Point -> Point -> World -> [[Cell]]
-toTable (minX, minY) (maxX, maxY) m =
+toTable (tlX, tlY) (brX, brY) m =
   [ [ lookupWorld m (x, y)
-    | x <- [minX .. maxX]
+    | x <- [tlX .. brX]
     ]
-  | y <- [maxY, maxY - 1 .. minY]
+  | y <- [tlY, tlY - 1 .. brY]
   ]
 
-toTable' :: World -> [[Cell]]
-toTable' m = toTable minP maxP m
+readTemplate :: String -> World
+readTemplate s =
+  newWorld $
+    concatMap
+      (\(line, y) -> fst $ foldl walkLine ([], (0, y)) (words line))
+      (zip (lines s) [0, -1 ..])
  where
-  nonDead = Map.filter (/= Dead) m
-  (minP, _) = Maybe.fromMaybe ((0, 0), Dead) $ Map.lookupMin nonDead
-  (maxP, _) = Maybe.fromMaybe ((0, 0), Dead) $ Map.lookupMax nonDead
+  walkLine (ps, (x, y)) =
+    let next = (x + 1, y)
+     in \case
+          "x" -> ((x, y) : ps, next)
+          "." -> (ps, next)
+          _ -> error "Invalid character"
+
+toTable' :: World -> [[Cell]]
+toTable' m = toTable tlP brP m
+ where
+  nonDead = map fst $ Map.toList $ Map.filter (/= Dead) m
+  corners ((tlX, tlY), (brX, brY)) (x, y) = ((min tlX x, max tlY y), (max brX x, min brY y))
+  (tlP, brP) = foldl corners (head nonDead, head nonDead) nonDead

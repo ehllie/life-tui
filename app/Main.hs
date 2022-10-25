@@ -3,6 +3,7 @@ module Main (main) where
 import Bench
 import Cli
 import Control.Concurrent (threadDelay)
+import Data.String.Interpolate (i)
 import Game
 import System.Console.ANSI (clearScreen, setCursorPosition, setTitle)
 
@@ -12,17 +13,6 @@ showTab tab = unlines $ map (unwords . map pad) shown
   shown = map (map show) tab
   maxLen = maximum $ map length $ concat shown
   pad s = s ++ replicate (maxLen - length s) ' '
-
-initState :: World
-initState =
-  newWorld
-    [ (1, 1)
-    , (1, 0)
-    , (0, 1)
-    , (-2, -2)
-    , (-2, -1)
-    , (-1, -2)
-    ]
 
 display :: Double -> World -> IO ()
 display fps world = do
@@ -36,5 +26,7 @@ main = do
   setTitle "Life-TUI"
   Args{cmd} <- parse
   case cmd of
-    Run{fps} -> mapM_ (display fps) (iterate updateWorld initState)
-    (Bench mode) -> runBench initState mode
+    Run{fps, pattern} -> do
+      content <- readFile [i|/home/ellie/Code/life-tui/templates/#{pattern}.gol|]
+      mapM_ (display fps) (iterate updateWorld $ readTemplate content)
+    (Bench mode) -> runBench mode

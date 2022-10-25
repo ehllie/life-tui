@@ -1,19 +1,26 @@
-module Bench where
+module Bench (runBench) where
 
 import Criterion.Main
 import Criterion.Main.Options (Mode)
 import Game
 
-runBench :: World -> Mode -> IO ()
-runBench world mode =
+templates :: [String]
+templates = ["acorn", "beacon", "glider", "gun", "infinite", "r-pentomino"]
+
+simulationLengths :: [Int]
+simulationLengths = [100, 1000, 10000, 50000]
+
+runBench :: Mode -> IO ()
+runBench mode = do
+  worlds <- mapM (readFile . (++) "/home/ellie/Code/life-tui/templates/" . (++ ".gol")) templates
   runMode
     mode
     [ bgroup
-        "GameOfLife"
-        [ bench "500" $ whnf (take 100) (iterate updateWorld world)
-        , bench "1000" $ whnf (take 100) (iterate updateWorld world)
-        , bench "5000" $ whnf (take 100) (iterate updateWorld world)
-        , bench "10000" $ whnf (take 100) (iterate updateWorld world)
-        , bench "50000" $ whnf (take 100) (iterate updateWorld world)
-        ]
+      template
+      [ bench
+        (show duration)
+        $ whnf (take duration) (iterate updateWorld world)
+      | duration <- simulationLengths
+      ]
+    | (template, world) <- zip templates (map readTemplate worlds)
     ]

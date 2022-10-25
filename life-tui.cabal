@@ -82,6 +82,7 @@ executable life-tui
     , base                  ^>=4.15.1.0
     , containers
     , criterion
+    , mtl
     , optparse-applicative
     , string-interpolate
 
