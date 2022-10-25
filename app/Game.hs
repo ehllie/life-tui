@@ -6,10 +6,8 @@ module Game (
   lookupWorld,
   newWorld,
   readTemplate,
-  toTable',
-  toTable,
   updateWorld,
-  worldDims,
+  findCentre,
 ) where
 
 import qualified Data.Map.Strict as Map
@@ -69,14 +67,6 @@ nextGen w p =
 newWorld :: [Point] -> World
 newWorld = Map.fromList . map (,Alive)
 
-toTable :: Point -> Dims -> World -> [[Cell]]
-toTable (aX, aY) (w, h) m =
-  [ [ lookupWorld m (x, y)
-    | x <- [aX .. aX + w - 1]
-    ]
-  | y <- [aY, aY - 1 .. aY - h - 1]
-  ]
-
 readTemplate :: String -> World
 readTemplate s =
   newWorld $
@@ -91,19 +81,11 @@ readTemplate s =
           "." -> (ps, next)
           _ -> error "Invalid character"
 
-worldDims :: World -> (Point, Dims)
-worldDims w =
+findCentre :: World -> Point
+findCentre w =
   let (xMin, xMax, yMin, yMax) =
         Map.foldlWithKey
           (\(xMin, xMax, yMin, yMax) (x, y) _ -> (min xMin x, max xMax x, min yMin y, max yMax y))
           (0, 0, 0, 0)
           w
-   in ( (ceiling $ fromIntegral (xMax + xMin) / 2, ceiling $ fromIntegral (yMax + yMin) / 2)
-      , (xMax - xMin + 1, yMax - yMin + 1)
-      )
-
-toTable' :: World -> [[Cell]]
-toTable' m = toTable (cX - w + r, cY - h + b) (w, h) m
- where
-  ((cX, cY), (w, h)) = worldDims m
-  (r, b) = (w `div` 2, h `div` 2)
+   in (ceiling $ fromIntegral (xMax + xMin) / 2, ceiling $ fromIntegral (yMax + yMin) / 2)

@@ -5,7 +5,7 @@ import Options.Applicative
 
 newtype Args = Args {cmd :: Command}
 data Command
-  = Run {fps :: Double, pattern :: String}
+  = Run {fps :: Double, pattern :: String, static :: Bool}
   | Bench Mode
 
 parseCmd :: Parser Command
@@ -18,7 +18,8 @@ parseCmd =
   runCmd = do
     fps <- option auto (long "fps" <> short 'f' <> value 1 <> help "Frames per second")
     pattern <- argument str (metavar "PATTERN")
-    pure Run{fps, pattern}
+    static <- switch (long "static" <> short 's' <> help "Static view")
+    pure Run{fps, pattern, static}
   runBench = Bench <$> parseWith defaultConfig
 
 parseArgs :: Parser Args
