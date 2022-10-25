@@ -19,7 +19,7 @@ runBench mode = do
       template
       [ bench
         (show duration)
-        $ whnf (take duration) (iterate updateWorld world)
+        $ whnf (take duration) [seq $ show state | state <- iterate updateWorld world]
       | duration <- simulationLengths
       ]
     | (template, world) <- zip templates (map readTemplate worlds)
