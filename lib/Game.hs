@@ -85,7 +85,7 @@ findCentre :: World -> Point
 findCentre w =
   let (xMin, xMax, yMin, yMax) =
         Map.foldlWithKey
-          (\(xMin, xMax, yMin, yMax) (x, y) _ -> (min xMin x, max xMax x, min yMin y, max yMax y))
+          (\(xMn, xMx, yMn, yMx) (x, y) _ -> (min xMn x, max xMx x, min yMn y, max yMx y))
           (0, 0, 0, 0)
           w
    in (ceiling $ fromIntegral (xMax + xMin) / 2, ceiling $ fromIntegral (yMax + yMin) / 2)
