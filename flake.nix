@@ -7,8 +7,21 @@
   outputs = { self, nixpkgs, flake-utils }:
     {
       overlays.default = _: prev: {
-        life-tui = with prev.haskellPackages;
-          developPackage { root = ./.; };
+        life-tui =
+          let
+            inherit (prev.haskellPackages) developPackage;
+            inherit (prev.haskell.lib.compose) overrideCabal;
+            pkg = developPackage { root = ./.; };
+          in
+          overrideCabal
+            (drv: {
+              preBuild = ''
+                export LIFE_TEMPLATE_DIR=$out/lib/templates
+                mkdir -p $LIFE_TEMPLATE_DIR
+                cp -r $src/templates/* $LIFE_TEMPLATE_DIR
+              '';
+            })
+            pkg;
       };
 
     } //
