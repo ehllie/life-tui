@@ -18,19 +18,21 @@ toTable (aX, aY) (w, h) m =
   [ [ lookupWorld m (x, y)
     | x <- [aX .. aX + w - 1]
     ]
-  | y <- [aY, aY - 1 .. aY - h - 1]
+  | y <- [aY, aY - 1 .. aY - h + 1]
   ]
 
+centreToCorner :: Point -> Dims -> Point
+centreToCorner (x, y) (w, h) = (x - w `div` 2, y + (h - 1) `div` 2)
+
 wholeTable :: Dims -> World -> [[Cell]]
-wholeTable (w, h) m = toTable anchor (w, h) m
- where
-  (cX, cY) = findCentre m
-  anchor = (cX - (w `div` 2), cY + h - (h `div` 2))
+wholeTable dims world =
+  toTable
+    (centreToCorner (findCentre world) dims)
+    dims
+    world
 
 staticTable :: Point -> Dims -> World -> [[Cell]]
-staticTable (cX, cY) (w, h) = toTable anchor (w, h)
- where
-  anchor = (cX - (w `div` 2), cY + h - (h `div` 2))
+staticTable anchor dims = toTable (centreToCorner anchor dims) dims
 
 display :: Double -> (Dims -> World -> [[Cell]]) -> World -> IO ()
 display fps draw world = do
