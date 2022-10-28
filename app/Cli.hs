@@ -1,6 +1,25 @@
 module Cli (parse, Args (..)) where
 
-import Options.Applicative
+import Options.Applicative (
+  Parser,
+  argument,
+  auto,
+  execParser,
+  fullDesc,
+  header,
+  help,
+  helper,
+  info,
+  long,
+  metavar,
+  option,
+  progDesc,
+  short,
+  str,
+  switch,
+  value,
+  (<**>),
+ )
 
 data Args = Args {fps :: Double, pattern :: String, static :: Bool}
 

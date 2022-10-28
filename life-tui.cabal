@@ -1,15 +1,14 @@
-cabal-version:      3.0
-name:               life-tui
-version:            0.1.0.0
-synopsis:           Run Game of Life in the terminal
-license:            MPL-2.0
-license-file:       LICENSE
-author:             Elizabeth Paź
-maintainer:         me@ehllie.xyz
-category:           Game
-build-type:         Simple
-extra-doc-files:    CHANGELOG.md
-extra-source-files: templates
+cabal-version:   3.0
+name:            life-tui
+version:         0.1.0.0
+synopsis:        Run Game of Life in the terminal
+license:         MPL-2.0
+license-file:    LICENSE
+author:          Elizabeth Paź
+maintainer:      me@ehllie.xyz
+category:        Game
+build-type:      Simple
+extra-doc-files: CHANGELOG.md
 
 common common
   ghc-options:        -Wall -Wno-type-defaults
@@ -22,22 +21,19 @@ common common
     QuasiQuotes
     TupleSections
 
-library compile-const
+library
   import:          common
-  hs-source-dirs:  compile
-  exposed-modules: Const
-  other-modules:   ConstQ
-  visibility:      private
+  hs-source-dirs:  lib
+  exposed-modules:
+    Game
+    Path
+
+  other-modules:   TH
   build-depends:
+    , containers
     , directory
     , filepath
     , template-haskell
-
-library
-  import:          common
-  exposed-modules: Game
-  hs-source-dirs:  lib
-  build-depends:   containers
 
 benchmark life-bench
   import:         common
@@ -45,7 +41,6 @@ benchmark life-bench
   main-is:        Bench.hs
   type:           exitcode-stdio-1.0
   build-depends:
-    , compile-const
     , criterion
     , life-tui
 
@@ -56,7 +51,6 @@ executable life-tui
   other-modules:  Cli
   build-depends:
     , ansi-terminal
-    , compile-const
     , life-tui
     , optparse-applicative
     , string-interpolate

@@ -1,9 +1,18 @@
 module Main (main) where
 
-import Cli
-import Const
+import Cli (Args (Args, fps, pattern, static), parse)
 import Control.Concurrent (threadDelay)
-import Game
+import Game (
+  Cell,
+  Dims,
+  Point,
+  World,
+  findCentre,
+  lookupWorld,
+  readTemplate,
+  updateWorld,
+ )
+import Path (templatePath)
 import System.Console.ANSI (getTerminalSize, setCursorPosition, setTitle)
 
 showTab :: Show a => [[a]] -> String

@@ -1,8 +1,8 @@
 module Main (main) where
 
-import Const
 import Criterion.Main
 import Game
+import Path
 
 templates :: [String]
 templates = ["acorn", "beacon", "glider", "gun", "infinite", "r-pentomino"]
