@@ -21,14 +21,15 @@ import Options.Applicative (
   (<**>),
  )
 
-data Args = Args {fps :: Double, pattern :: String, static :: Bool}
+data Args = Args {fps :: Double, pattern :: String, static :: Bool, brick :: Bool}
 
 parseArgs :: Parser Args
 parseArgs = do
   fps <- option auto (long "fps" <> short 'f' <> value 1 <> help "Frames per second")
   pattern <- argument str (metavar "PATTERN")
   static <- switch (long "static" <> short 's' <> help "Static view")
-  pure Args{fps, pattern, static}
+  brick <- switch (long "brick" <> short 'b' <> help "Demo brick")
+  pure Args{fps, pattern, static, brick}
 
 parse :: IO Args
 parse = execParser opts

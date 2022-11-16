@@ -1,6 +1,15 @@
 module Main (main) where
 
-import Cli (Args (Args, fps, pattern, static), parse)
+import Brick (Widget, simpleMain)
+import Brick.Widgets.Core (str)
+import Brick.Widgets.Table (
+  columnBorders,
+  renderTable,
+  rowBorders,
+  surroundingBorder,
+  table,
+ )
+import Cli (Args (Args, brick, fps, pattern, static), parse)
 import Control.Concurrent (threadDelay)
 import Game (
   Cell,
@@ -53,7 +62,20 @@ display fps draw world = do
 main :: IO ()
 main = do
   setTitle "Life-TUI"
-  Args{fps, pattern, static} <- parse
+  Args{fps, pattern, static, brick} <- parse
   startWorld <- readTemplate <$> readFile (templatePath pattern)
-  let draw = if static then staticTable $ findCentre startWorld else wholeTable
-  mapM_ (display fps draw) (iterate updateWorld startWorld)
+  if brick
+    then do
+      let ui :: Widget ()
+          ui =
+            renderTable
+              . surroundingBorder False
+              . rowBorders False
+              . columnBorders False
+              . table
+              . map (map (str . show))
+              $ wholeTable (15, 15) startWorld
+      simpleMain ui
+    else do
+      let draw = if static then staticTable $ findCentre startWorld else wholeTable
+      mapM_ (display fps draw) (iterate updateWorld startWorld)

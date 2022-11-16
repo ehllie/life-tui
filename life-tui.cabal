@@ -11,7 +11,7 @@ build-type:      Simple
 extra-doc-files: CHANGELOG.md
 
 common common
-  ghc-options:        -Wall -Wno-type-defaults
+  ghc-options:        -Wall -Wno-type-defaults -threaded
   default-language:   Haskell2010
   build-depends:      base ^>=4.15.1.0
   default-extensions:
@@ -51,6 +51,7 @@ executable life-tui
   other-modules:  Cli
   build-depends:
     , ansi-terminal
+    , brick
     , life-tui
     , optparse-applicative
     , string-interpolate
