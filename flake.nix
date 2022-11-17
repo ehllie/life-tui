@@ -10,28 +10,22 @@
         life-tui =
           let
             inherit (prev.haskellPackages) developPackage;
-            inherit (prev.haskell.lib.compose) overrideCabal;
-            inherit (prev) installShellFiles;
-            pkg = developPackage { root = ./.; };
+            inherit (prev.lib) pipe;
+            inherit (prev.haskell.lib.compose)
+              overrideCabal generateOptparseApplicativeCompletion;
+            overrides = [
+              (overrideCabal (old: {
+                preBuild = ''
+                  export LIFE_TEMPLATE_DIR=$out/share/life-tui/templates
+                  mkdir -p $LIFE_TEMPLATE_DIR
+                  cp -r $src/templates/* $LIFE_TEMPLATE_DIR
+                '';
+              }))
+              (generateOptparseApplicativeCompletion "life-tui")
+            ];
+            pkg = (developPackage { root = ./.; });
           in
-          overrideCabal
-            (old: {
-              buildTools = (old.buildTools or [ ]) ++ [ installShellFiles ];
-
-              preBuild = ''
-                export LIFE_TEMPLATE_DIR=$out/share/life-tui/templates
-                mkdir -p $LIFE_TEMPLATE_DIR
-                cp -r $src/templates/* $LIFE_TEMPLATE_DIR
-              '';
-
-              postInstall = ''
-                installShellCompletion --cmd life-tui \
-                 --bash <($out/bin/life-tui --bash-completion-script $out/bin/life-tui) \
-                 --fish <($out/bin/life-tui --fish-completion-script $out/bin/life-tui) \
-                 --zsh <($out/bin/life-tui --zsh-completion-script $out/bin/life-tui) \
-              '';
-            })
-            pkg;
+          pipe pkg overrides;
       };
 
     } //
