@@ -36,12 +36,16 @@
           overlays = [ self.overlays.default ];
         };
         inherit (pkgs) life-tui;
+        inherit (pkgs.haskellPackages) haskell-language-server;
       in
       {
         packages = {
           inherit life-tui;
           default = life-tui;
         };
-        devShells.default = life-tui.env;
+        devShells.default = life-tui.env.overrideAttrs
+          (old: {
+            nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ haskell-language-server ];
+          });
       }));
 }
