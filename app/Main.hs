@@ -34,11 +34,13 @@ data GameState = GameState
   , updateCounter :: Double
   , centre :: Point
   , render :: Render
+  , rollback :: Bool
   }
 
 data Mode
   = Paused
   | Running
+  | Reverse
   | Quit
   deriving (Eq)
 
@@ -82,6 +84,7 @@ logicFunction _ gState event =
         when (isKey 'q') $ modify \s -> s{mode = Quit}
         when (isKey '+') $ modify \s -> s{speed = speed s * 1.2}
         when (isKey '-') $ modify \s -> s{speed = speed s / 1.2}
+        when (isKey 'r') $ modify \s -> s{rollback = not $ rollback s}
         when (isKey 't') $ modify \s ->
           s
             { render = case render s of
@@ -97,9 +100,10 @@ logicFunction _ gState event =
             }
 
         mode <- gets mode
+        rollback <- gets rollback
         when (mode == Running) do
           while (gets ((>= 1) . updateCounter)) do
-            modify forwardWorld
+            modify if rollback then backwardWorld else forwardWorld
             modify $ \s -> s{updateCounter = updateCounter s - 1}
           modify $ \s -> s{updateCounter = updateCounter s + speed s}
 
@@ -114,13 +118,14 @@ logicFunction _ gState event =
           when (isKey 'l') $ modify \s -> s{centre = (fst centre + 1, snd centre)}
           when (isKey 'j') $ modify \s -> s{centre = (fst centre, snd centre - 1)}
           when (isKey 'k') $ modify \s -> s{centre = (fst centre, snd centre + 1)}
+          when (isKey '0') $ modify \s -> s{centre = findCentre . last $ history s}
 
         when (render == Dynamic) do
           world <- gets $ head . history
           modify $ \s -> s{centre = findCentre world}
 
 drawFunction :: GEnv -> GameState -> Plane
-drawFunction gEnv@GEnv{eTermDims, eFPS} GameState{history, centre, mode, render, speed} =
+drawFunction gEnv@GEnv{eTermDims, eFPS} GameState{history, centre, mode, render, speed, rollback} =
   let (cCol, cRow) = centreToCorner centre eTermDims
       world = head history
       lifePlane = Map.foldlWithKey addCell (blankPlaneFull gEnv) world
@@ -141,6 +146,7 @@ drawFunction gEnv@GEnv{eTermDims, eFPS} GameState{history, centre, mode, render,
           , word (printf "FPS: %d" eFPS)
           ]
             <> [word "Paused" | mode == Paused]
+            <> [word "Rewinding" | mode == Running, rollback]
             <> [word "Camera locked" | render == Dynamic]
    in lifePlane
         & (1, 1) % uiPlane
@@ -171,5 +177,6 @@ main = do
           , updateCounter = 0
           , centre = findCentre startWorld
           , render = if aDynamic then Dynamic else Static
+          , rollback = False
           }
   playGame $ game initState
