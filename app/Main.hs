@@ -134,15 +134,15 @@ game state =
 main :: IO ()
 main = do
   setTitle "Life-TUI"
-  Args{fps, lifePattern, static} <- parse
-  startWorld <- readTemplate <$> readFile (templatePath lifePattern)
+  Args{aSpeed, aPattern, aDynamic} <- parse
+  startWorld <- readTemplate <$> readFile (templatePath aPattern)
   let initState =
         State
           { mode = Paused
           , world = startWorld
-          , speed = 0.1
+          , speed = aSpeed / 10
           , updateCounter = 0
           , centre = findCentre startWorld
-          , render = if static then Static else Dynamic
+          , render = if aDynamic then Dynamic else Static
           }
   playGame $ game initState

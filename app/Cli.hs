@@ -21,14 +21,14 @@ import Options.Applicative (
   (<**>),
  )
 
-data Args = Args {fps :: Double, lifePattern :: String, static :: Bool}
+data Args = Args {aSpeed :: Double, aPattern :: String, aDynamic :: Bool}
 
 parseArgs :: Parser Args
 parseArgs = do
-  fps <- option auto (long "fps" <> short 'f' <> value 1 <> help "Frames per second")
-  lifePattern <- argument str (metavar "PATTERN")
-  static <- switch (long "static" <> short 's' <> help "Static view")
-  pure Args{fps, lifePattern, static}
+  aSpeed <- option auto (long "speed" <> short 's' <> value 0.5 <> help "World updates per second")
+  aPattern <- argument str (metavar "PATTERN")
+  aDynamic <- switch (long "dynamic" <> short 'd' <> help "Dynamic view")
+  pure Args{aSpeed, aPattern, aDynamic}
 
 parse :: IO Args
 parse = execParser opts
