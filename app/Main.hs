@@ -1,24 +1,35 @@
 module Main (main) where
 
 import Cli (Args (..), parse)
-import Control.Concurrent (threadDelay)
+import qualified Data.Map.Strict as Map
 import Game (
-  Cell,
+  Cell (..),
   Dims,
   Point,
   World,
   findCentre,
-  lookupWorld,
   readTemplate,
   updateWorld,
  )
 import Path (templatePath)
-import System.Console.ANSI (getTerminalSize, setCursorPosition, setTitle)
-import Terminal.Game (Event (..), GEnv (..), Game (..), Plane, playGame, stringPlane)
+import System.Console.ANSI (setTitle)
+import Terminal.Game (
+  Event (..),
+  GEnv (..),
+  Game (..),
+  Plane,
+  blankPlaneFull,
+  cell,
+  playGame,
+  vcat,
+  word,
+  (%),
+ )
+import Text.Printf (printf)
 
-data State = State
+data GameState = GameState
   { mode :: Mode
-  , world :: World
+  , history :: NonEmpty World
   , speed :: Double
   , updateCounter :: Double
   , centre :: Point
@@ -34,100 +45,116 @@ data Mode
 data Render
   = Static
   | Dynamic
-
-showTab :: Show a => [[a]] -> String
-showTab tab = unlines $ map (concatMap pad) shown
- where
-  shown = map (map show) tab
-  maxLen = maximum $ map length $ concat shown
-  pad s = s ++ replicate (maxLen - length s) ' '
-
-toTable :: Point -> Dims -> World -> [[Cell]]
-toTable (aX, aY) (w, h) m =
-  [ [ lookupWorld m (x, y)
-    | x <- [aX .. aX + w - 1]
-    ]
-  | y <- [aY, aY - 1 .. aY - h + 1]
-  ]
+  deriving (Eq)
 
 centreToCorner :: Point -> Dims -> Point
 centreToCorner (x, y) (w, h) = (x - w `div` 2, y + (h - 1) `div` 2)
 
-wholeTable :: Dims -> World -> [[Cell]]
-wholeTable dims world =
-  toTable
-    (centreToCorner (findCentre world) dims)
-    dims
-    world
+while :: Monad m => m Bool -> m () -> m ()
+while cond action = do
+  c <- cond
+  when c $ do
+    action
+    while cond action
 
-staticTable :: Point -> Dims -> World -> [[Cell]]
-staticTable anchor dims = toTable (centreToCorner anchor dims) dims
+forwardWorld :: GameState -> GameState
+forwardWorld gState@GameState{history} =
+  gState
+    { history = updated :| w : ws
+    }
+ where
+  updated = updateWorld w
+  (w :| ws) = history
 
-display :: Double -> (Dims -> World -> [[Cell]]) -> World -> IO ()
-display fps draw world = do
-  setCursorPosition 0 0
-  (h, w) <- (\(Just (x, y)) -> return (fromIntegral x, fromIntegral y)) =<< getTerminalSize
-  putStr $ showTab $ draw (w, h) world
-  threadDelay (1000 * floor (1000 / fps))
+backwardWorld :: GameState -> GameState
+backwardWorld gState@GameState{history} =
+  gState
+    { history = w' :| ws'
+    }
+ where
+  (w :| ws) = history
+  (w', ws') = fromMaybe (w, []) $ uncons ws
 
-logicFunction :: GEnv -> State -> Event -> State
-logicFunction _ State{mode, world, speed, updateCounter, centre, render} event =
-  let keyIn = any ((== event) . KeyPress)
-      realCounter = floor updateCounter
-      fraction = updateCounter - fromIntegral realCounter
-      newWorld = case mode of
-        Running -> last $ take (realCounter + 1) (iterate updateWorld world)
-        Paused | keyIn "l" -> updateWorld world
-        _ -> world
-      newMode
-        | keyIn " " = case mode of
-            Paused -> Running
-            Running -> Paused
-            _ -> mode
-        | keyIn "q" = Quit
-        | otherwise = mode
-      newSpeed
-        | keyIn "+" = speed * 1.2
-        | keyIn "-" = speed / 1.2
-        | otherwise = speed
-      newCounter = case mode of
-        Running -> fraction + speed
-        _ -> updateCounter
-      newCentre = case render of
-        Static -> case event of
-          KeyPress 'H' -> (fst centre - 1, snd centre)
-          KeyPress 'L' -> (fst centre + 1, snd centre)
-          KeyPress 'J' -> (fst centre, snd centre - 1)
-          KeyPress 'K' -> (fst centre, snd centre + 1)
-          _ -> centre
-        Dynamic -> findCentre newWorld
-      newRender = case event of
-        KeyPress 't' -> case render of
-          Dynamic -> Static
-          Static -> Dynamic
-        _ -> render
-   in State
-        { mode = newMode
-        , world = newWorld
-        , speed = newSpeed
-        , updateCounter = newCounter
-        , centre = newCentre
-        , render = newRender
-        }
+logicFunction :: GEnv -> GameState -> Event -> GameState
+logicFunction _ gState event =
+  let isKey c = event == KeyPress c
+   in flip execState gState do
+        when (isKey 'q') $ modify \s -> s{mode = Quit}
+        when (isKey '+') $ modify \s -> s{speed = speed s * 1.2}
+        when (isKey '-') $ modify \s -> s{speed = speed s / 1.2}
+        when (isKey 't') $ modify \s ->
+          s
+            { render = case render s of
+                Static -> Dynamic
+                Dynamic -> Static
+            }
+        when (isKey ' ') $ modify \s ->
+          s
+            { mode = case mode s of
+                Paused -> Running
+                Running -> Paused
+                _ -> mode s
+            }
 
-drawFunction :: GEnv -> State -> Plane
-drawFunction GEnv{eTermDims} State{world, centre} =
-  let corner = centreToCorner centre eTermDims
-      worldTab = toTable corner eTermDims world
-   in stringPlane $ showTab worldTab
+        mode <- gets mode
+        when (mode == Running) do
+          while (gets ((>= 1) . updateCounter)) do
+            modify forwardWorld
+            modify $ \s -> s{updateCounter = updateCounter s - 1}
+          modify $ \s -> s{updateCounter = updateCounter s + speed s}
 
-game :: State -> Game State
-game state =
+        when (mode == Paused) do
+          when (isKey 'f') $ modify forwardWorld
+          when (isKey 'b') $ modify backwardWorld
+
+        render <- gets render
+        when (render == Static) do
+          centre <- gets centre
+          when (isKey 'h') $ modify \s -> s{centre = (fst centre - 1, snd centre)}
+          when (isKey 'l') $ modify \s -> s{centre = (fst centre + 1, snd centre)}
+          when (isKey 'j') $ modify \s -> s{centre = (fst centre, snd centre - 1)}
+          when (isKey 'k') $ modify \s -> s{centre = (fst centre, snd centre + 1)}
+
+        when (render == Dynamic) do
+          world <- gets $ head . history
+          modify $ \s -> s{centre = findCentre world}
+
+drawFunction :: GEnv -> GameState -> Plane
+drawFunction gEnv@GEnv{eTermDims, eFPS} GameState{history, centre, mode, render, speed} =
+  let (cCol, cRow) = centreToCorner centre eTermDims
+      world = head history
+      lifePlane = Map.foldlWithKey addCell (blankPlaneFull gEnv) world
+      addCell plane (col, row) c =
+        if c == Alive
+          then plane & framePoint % cell 'X'
+          else plane
+       where
+        -- ansi-terminal-game treats coordinates as (row, col),
+        -- with (1,1) being in the top left corner
+        -- but our world is (col, row) with (0, 0) in the bottom left corner
+        framePoint = (cRow - row, col - cCol)
+      uiPlane =
+        vcat $
+          [ word (printf "Alive cells: %d" . Map.size $ Map.filter (== Alive) world)
+          , word (printf "Generation: %d" $ length history)
+          , word (printf "Speed: %.2f" (speed * fromIntegral usedTPS))
+          , word (printf "FPS: %d" eFPS)
+          ]
+            <> [word "Paused" | mode == Paused]
+            <> [word "Camera locked" | render == Dynamic]
+   in lifePlane
+        & (1, 1) % uiPlane
+
+usedTPS :: Integer
+usedTPS = 15
+
+game :: GameState -> Game GameState
+game initState =
   Game
     { gLogicFunction = logicFunction
-    , gInitState = state
-    , gTPS = 10
-    , gQuitFunction = \State{mode} -> mode == Quit
+    , gInitState = initState
+    , gTPS = usedTPS
+    , gQuitFunction = \GameState{mode} -> mode == Quit
     , gDrawFunction = drawFunction
     }
 
@@ -135,12 +162,12 @@ main :: IO ()
 main = do
   setTitle "Life-TUI"
   Args{aSpeed, aPattern, aDynamic} <- parse
-  startWorld <- readTemplate <$> readFile (templatePath aPattern)
+  startWorld <- readTemplate <$> readFileText (templatePath aPattern)
   let initState =
-        State
+        GameState
           { mode = Paused
-          , world = startWorld
-          , speed = aSpeed / 10
+          , history = startWorld :| []
+          , speed = aSpeed / fromIntegral usedTPS
           , updateCounter = 0
           , centre = findCentre startWorld
           , render = if aDynamic then Dynamic else Static

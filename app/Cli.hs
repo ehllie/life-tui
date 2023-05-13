@@ -18,14 +18,13 @@ import Options.Applicative (
   str,
   switch,
   value,
-  (<**>),
  )
 
 data Args = Args {aSpeed :: Double, aPattern :: String, aDynamic :: Bool}
 
 parseArgs :: Parser Args
 parseArgs = do
-  aSpeed <- option auto (long "speed" <> short 's' <> value 0.5 <> help "World updates per second")
+  aSpeed <- option auto (long "speed" <> short 's' <> value 1 <> help "World updates per second")
   aPattern <- argument str (metavar "PATTERN")
   aDynamic <- switch (long "dynamic" <> short 'd' <> help "Dynamic view")
   pure Args{aSpeed, aPattern, aDynamic}

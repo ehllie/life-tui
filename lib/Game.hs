@@ -1,5 +1,5 @@
 module Game (
-  Cell,
+  Cell (..),
   Dims,
   Point,
   World,
@@ -10,9 +10,11 @@ module Game (
   findCentre,
 ) where
 
+import Data.List (foldl)
 import qualified Data.Map.Strict as Map
 import qualified Data.Maybe as Maybe
 import qualified Data.Set as Set
+import Text.Show (Show (..))
 
 data Cell = Alive | Dead deriving (Eq)
 
@@ -67,7 +69,10 @@ nextGen w p =
 newWorld :: [Point] -> World
 newWorld = Map.fromList . map (,Alive)
 
-readTemplate :: String -> World
+-- >>> readTemplate "x . x\n. x .\nx x x"
+-- fromList [((0,-2),X),((0,0),X),((1,-2),X),((1,-1),X),((2,-2),X),((2,0),X)]
+
+readTemplate :: Text -> World
 readTemplate s =
   newWorld $
     concatMap
