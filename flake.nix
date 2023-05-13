@@ -14,6 +14,9 @@
             inherit (prev.haskell.lib.compose)
               overrideCabal generateOptparseApplicativeCompletion;
             overrides = [
+              (pkg: pkg.overrideAttrs (old: {
+                nativeBuildInputs = old.nativeBuildInputs ++ [ prev.zlib ];
+              }))
               (overrideCabal (old: {
                 preBuild = ''
                   export LIFE_TEMPLATE_DIR=$out/share/life-tui/templates
@@ -35,7 +38,7 @@
           inherit system;
           overlays = [ self.overlays.default ];
         };
-        inherit (pkgs) life-tui;
+        inherit (pkgs) life-tui zlib;
         inherit (pkgs.haskellPackages) haskell-language-server;
       in
       {

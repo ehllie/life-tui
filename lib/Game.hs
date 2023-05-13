@@ -20,9 +20,9 @@ instance Show Cell where
   show Alive = "X"
   show Dead = " "
 
-type Point = (Integer, Integer)
+type Point = (Int, Int)
 
-type Dims = (Integer, Integer)
+type Dims = (Int, Int)
 
 type World = (Map.Map Point Cell)
 

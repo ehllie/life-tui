@@ -49,8 +49,10 @@ executable life-tui
   hs-source-dirs: app
   main-is:        Main.hs
   other-modules:  Cli
+  ghc-options:    -threaded
   build-depends:
     , ansi-terminal
+    , ansi-terminal-game
     , life-tui
     , optparse-applicative
     , string-interpolate
